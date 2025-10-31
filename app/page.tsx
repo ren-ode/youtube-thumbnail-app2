@@ -116,7 +116,7 @@ if (uploadedImage) {
 
     // テキスト背景
     // ===== テキスト描画 =====
-ctx.font = `bold ${textSize}px "fot-udkakugo-large-pr6n", "Noto Sans JP", sans-serif`;
+ctx.font = `bold ${textSize}px "fot-udkakugo-large-pr6n", sans-serif`;
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 
