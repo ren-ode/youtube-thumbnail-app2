@@ -17,17 +17,21 @@ export const metadata = {
   title: 'YouTube サムネ作成ツール',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ja">
       <head>
         <script
           src="https://use.typekit.net/yju5vnt.js"
           async
-        ></script>
+        />
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{Typekit.load({ async: true });}catch(e){}`
+            __html: "try{Typekit.load({ async: true });}catch(e){}",
           }}
         />
       </head>
@@ -35,4 +39,5 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
 
