@@ -34,8 +34,8 @@ export default function Page() {
 
   // ダウンロード
   const handleDownload = () => {
-  const canvas = canvasRef.current;
-  if (!canvas) return; // ← null 対策追加
+  const canvas = canvasRef.current as HTMLCanvasElement | null;
+if (!canvas) return; // null 対応
 
   const link = document.createElement("a");
   link.download = "thumbnail.png";
