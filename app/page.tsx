@@ -7,7 +7,7 @@ export default function Page() {
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
   const [borderColor, setBorderColor] = useState("#172F59");
   const [borderSize, setBorderSize] = useState(20);
   const [text, setText] = useState("ここにテキストを入力");
@@ -26,7 +26,7 @@ export default function Page() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => setUploadedImage(img);
+      img.onload = () => setUploadedImage(img as HTMLImageElement);
       img.src = event.target?.result;
     };
     reader.readAsDataURL(file);
