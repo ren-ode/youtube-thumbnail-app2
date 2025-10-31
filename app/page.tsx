@@ -45,15 +45,17 @@ if (!canvas) return; // null 対応
 
   // Canvas描画
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+  const canvas = canvasRef.current as HTMLCanvasElement | null;
+  if (!canvas) return;
 
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
+  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D | null;
+  if (!ctx) return;
 
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // 枠
     ctx.fillStyle = borderColor;
