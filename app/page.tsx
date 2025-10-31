@@ -27,7 +27,7 @@ export default function Page() {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => setUploadedImage(img as HTMLImageElement);
-      img.src = event.target?.result;
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
