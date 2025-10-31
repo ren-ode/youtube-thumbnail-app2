@@ -5,7 +5,7 @@ import { Upload, Download, X } from "lucide-react";
 
 export default function Page() {
   const canvasRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
   const [borderColor, setBorderColor] = useState("#172F59");
