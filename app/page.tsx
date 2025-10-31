@@ -203,7 +203,7 @@ ctx.fillText(text, textX, textY);
               onChange={handleImageUpload}
             />
             <button
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
               className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50"
             >
               <Upload size={18} />
