@@ -34,12 +34,14 @@ export default function Page() {
 
   // ダウンロード
   const handleDownload = () => {
-    const canvas = canvasRef.current;
-    const link = document.createElement("a");
-    link.download = "thumbnail.png";
-    link.href = canvas.toDataURL();
-    link.click();
-  };
+  const canvas = canvasRef.current;
+  if (!canvas) return; // ← null 対策追加
+
+  const link = document.createElement("a");
+  link.download = "thumbnail.png";
+  link.href = canvas.toDataURL();
+  link.click();
+};
 
   // Canvas描画
   useEffect(() => {
