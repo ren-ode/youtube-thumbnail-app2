@@ -19,7 +19,7 @@ export default function Page() {
   const canvasHeight = 720;
 
   // 画像アップロード
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
