@@ -116,16 +116,44 @@ if (uploadedImage) {
 
     // テキスト背景
     // ===== テキスト描画 =====
-ctx.font = `bold ${textSize}px "fot-udkakugo-large-pr6n", sans-serif`;
+ctx.font = `bold ${textSize}px "fot-udkakugo-large-pr6n", "Noto Sans JP", sans-serif`;
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 
 let textX = canvasWidth / 2;
 let textY = canvasHeight - textPositionY; // ★ let に変更（上書きするため）
 
-const textWidth = ctx.measureText(text).width;
-const paddingX = 20;
-const paddingY = 10;
+// 文字間隔（負の値で詰める）
+const letterSpacing = -4; // 調整ポイント：-2〜-6が良い感じ
+
+// テキスト幅を測定
+let actualTextWidth = 0;
+for (let i = 0; i < text.length; i++) {
+  actualTextWidth += ctx.measureText(text[i]).width + letterSpacing;
+}
+
+// 描画開始位置
+let currentX = textX - actualTextWidth / 2;
+
+// 1文字ずつ描画（太字っぽく+字詰め）
+for (let i = 0; i < text.length; i++) {
+  const char = text[i];
+  const charWidth = ctx.measureText(char).width;
+
+  // 疑似太字（横に重ねる）
+  ctx.fillText(char, currentX + charWidth / 2 + 0.6, textY);
+  ctx.fillText(char, currentX + charWidth / 2 - 0.4, textY);
+  ctx.fillText(char, currentX + charWidth / 2, textY);
+
+  currentX += charWidth + letterSpacing;
+}
+
+// letterSpacing を反映した実際の幅
+const textWidth = actualTextWidth;
+
+// ★ ここを調整すれば余白が増える
+const paddingX = 42;  // 横余白 → 20→30くらいに増やす
+const paddingY = 15;  // 縦余白 → 10→15
 
 const bgWidth = textWidth + paddingX * 2;
 const bgHeight = textSize + paddingY * 2;
@@ -165,7 +193,27 @@ ctx.fill();
 
 
 // テキスト描画（中央配置）
-ctx.fillStyle = "#fff";
+// ===== 擬似太字：横方向強調 =====
+ctx.fillStyle = "#FFFFFF";
+
+// 擬似太字（X軸に複製）
+ctx.shadowColor = "rgba(0,0,0,1)";
+ctx.shadowBlur = 0;
+ctx.shadowOffsetX = 1;
+ctx.shadowOffsetY = 0;
+
+// 1px横ズラし描画（右）
+ctx.fillText(text, textX + 0.6, textY);
+
+// 左側少しだけズラして厚み
+ctx.fillText(text, textX - 0.4, textY);
+
+// 本体（中央）
+ctx.fillText(text, textX, textY);
+
+// シャドウ解除
+ctx.shadowColor = "transparent";
+
 ctx.fillText(text, textX, textY);
 
   });
