@@ -190,6 +190,12 @@ if (textBottom > bottomLimit) {
 const bgX = textX - bgWidth / 2;
 const bgY = textY - bgHeight / 2;
 
+const trimmedText = text.trim();
+if (!trimmedText) {
+  // テキストが空なら背景も文字も描かない
+  return;
+}
+
 // ==== 背景描画（テキストがあるときのみ描画）====
 if (text.trim() !== "") {
   ctx.fillStyle = textBackgroundColor;
