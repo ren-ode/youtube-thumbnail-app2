@@ -43,6 +43,19 @@ if (!canvas) return; // null 対応
   link.click();
 };
 
+// フォントをロードする（1回だけ実行）
+useEffect(() => {
+  (async () => {
+    try {
+      // テレ朝UDフォントをロード
+      await document.fonts.load(`48px "テレ朝UD角ゴ Pr6N DB"`);
+      console.log("フォントロード完了：テレ朝UD角ゴ Pr6N DB");
+    } catch (e) {
+      console.warn("フォントロードに失敗しました", e);
+    }
+  })();
+}, []);
+
   // Canvas描画
   useEffect(() => {
   const canvas = canvasRef.current as HTMLCanvasElement | null;
@@ -116,7 +129,13 @@ if (uploadedImage) {
 
     // テキスト背景
     // ===== テキスト描画 =====
-ctx.font = `bold ${textSize}px "fot-udkakugo-large-pr6n", "Noto Sans JP", sans-serif`;
+
+    // テキストが空なら、背景＆文字は描画しない
+if (!text.trim()) {
+  return;
+}
+
+ctx.font = `${textSize}px "テレ朝UD角ゴ Pr6N DB", "Noto Sans JP", sans-serif`;
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 
@@ -170,6 +189,46 @@ if (textBottom > bottomLimit) {
 // 背景位置（中央揃え）
 const bgX = textX - bgWidth / 2;
 const bgY = textY - bgHeight / 2;
+
+// ==== 背景描画（テキストがあるときのみ描画）====
+if (text.trim() !== "") {
+  ctx.fillStyle = textBackgroundColor;
+  const bgRadius = 25;
+
+  ctx.beginPath();
+  ctx.moveTo(bgX + bgRadius, bgY);
+  ctx.lineTo(bgX + bgWidth - bgRadius, bgY);
+  ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgRadius);
+
+  ctx.lineTo(bgX + bgWidth, bgY + bgHeight - bgRadius);
+  ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - bgRadius, bgY + bgHeight);
+
+  ctx.lineTo(bgX + bgRadius, bgY + bgHeight);
+  ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - bgRadius);
+
+  ctx.lineTo(bgX, bgY + bgRadius);
+  ctx.quadraticCurveTo(bgX, bgY, bgX + bgRadius, bgY);
+  ctx.closePath();
+
+  ctx.fill();
+}
+
+// ==== テキスト描画（テキストがあるときのみ描画）====
+if (text.trim() !== "") {
+  ctx.fillStyle = "#FFFFFF";
+
+  // 影（縁取り）
+  ctx.shadowColor = "rgba(0,0,0,1)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 0;
+  ctx.fillText(text, textX + 0.6, textY);
+  ctx.fillText(text, textX - 0.4, textY);
+
+  // 本体
+  ctx.shadowColor = "transparent";
+  ctx.fillText(text, textX, textY);
+}
 
 // 背景描画
 ctx.fillStyle = textBackgroundColor;
