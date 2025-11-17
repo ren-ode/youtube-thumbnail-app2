@@ -4,19 +4,30 @@ import { useState, useRef, useEffect } from "react";
 import { Upload, Download, X } from "lucide-react";
 
 export default function Page() {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
+  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+
   const [borderColor, setBorderColor] = useState("#172F59");
   const [borderSize, setBorderSize] = useState(20);
-  const [text, setText] = useState("ここにテキストを入力");
-  const [textBackgroundColor, setTextBackgroundColor] = useState("#172F59");
+  const [text, setText] = useState("ここにショートタイトルを入力");
   const [textSize, setTextSize] = useState(48);
+  const [textBackgroundColor, setTextBackgroundColor] = useState("#172F59");
   const [textPositionY, setTextPositionY] = useState(80);
 
   const canvasWidth = 1280;
   const canvasHeight = 720;
+
+  // ===== ロゴ画像を読み込む（1回だけ） =====
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/youtube_ann_logo.png"; // public フォルダ配下
+    img.onload = () => {
+      setLogoImage(img);
+    };
+  }, []);
 
   // 画像アップロード
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,6 +54,12 @@ if (!canvas) return; // null 対応
   link.click();
 };
 
+useEffect(() => {
+  const logo = new Image();
+  logo.src = "/youtube_ann_logo.png"; // ← ここに君のロゴ名
+  logo.onload = () => setLogoImage(logo);
+}, []);
+
 // フォントをロードする（1回だけ実行）
 useEffect(() => {
   (async () => {
@@ -58,26 +75,28 @@ useEffect(() => {
 
   // Canvas描画
   useEffect(() => {
-  const canvas = canvasRef.current as HTMLCanvasElement | null;
-  if (!canvas) return;
+    const canvas = canvasRef.current as HTMLCanvasElement | null;
+    if (!canvas) return;
 
-  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D | null;
-  if (!ctx) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
+    // キャンバスサイズ設定
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // 背景（白）
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // 枠
+    // ===== 枠 =====
     ctx.fillStyle = borderColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
    // 画像があるとき（corner maskを先に作る）
 if (uploadedImage) {
     // === 角丸マスクを適用（画像領域）=== 
-    const radius = 30; // 好みで変更可能！
+    const radius = 20; // 好みで変更可能！
 
     ctx.beginPath();
     ctx.moveTo(borderSize + radius, borderSize);
@@ -125,6 +144,16 @@ if (uploadedImage) {
   const dH = availH;
 
   ctx.drawImage(uploadedImage, sx, sy, sW, sH, dx, dy, dW, dH);
+
+  // ==== テレ朝NEWS ロゴ描画 ====
+if (logoImage) {
+      const logoWidth = 180; // 好きなサイズ
+      const logoHeight = (logoImage.height / logoImage.width) * logoWidth;
+      const padding = 20; // 左上からの余白
+
+      ctx.drawImage(logoImage, padding, padding, logoWidth, logoHeight);
+    }
+
 }
 
     // テキスト背景
@@ -190,16 +219,12 @@ if (textBottom > bottomLimit) {
 const bgX = textX - bgWidth / 2;
 const bgY = textY - bgHeight / 2;
 
+// ここで一回だけ trim しておく
 const trimmedText = text.trim();
-if (!trimmedText) {
-  // テキストが空なら背景も文字も描かない
-  return;
-}
-
-// ==== 背景描画（テキストがあるときのみ描画）====
-if (text.trim() !== "") {
+if (trimmedText) {
+  // ======== テキスト背景描画 ========
   ctx.fillStyle = textBackgroundColor;
-  const bgRadius = 25;
+  const bgRadius = 20;
 
   ctx.beginPath();
   ctx.moveTo(bgX + bgRadius, bgY);
@@ -220,48 +245,9 @@ if (text.trim() !== "") {
 }
 
 // ==== テキスト描画（テキストがあるときのみ描画）====
-if (text.trim() !== "") {
   ctx.fillStyle = "#FFFFFF";
 
-  // 影（縁取り）
-  ctx.shadowColor = "rgba(0,0,0,1)";
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 0;
-  ctx.fillText(text, textX + 0.6, textY);
-  ctx.fillText(text, textX - 0.4, textY);
-
-  // 本体
-  ctx.shadowColor = "transparent";
-  ctx.fillText(text, textX, textY);
-}
-
-// 背景描画
-ctx.fillStyle = textBackgroundColor;
-// === テキスト帯角丸 ===
-const bgRadius = 25;
-
-ctx.beginPath();
-ctx.moveTo(bgX + bgRadius, bgY);
-ctx.lineTo(bgX + bgWidth - bgRadius, bgY);
-ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgRadius);
-ctx.lineTo(bgX + bgWidth, bgY + bgHeight - bgRadius);
-ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - bgRadius, bgY + bgHeight);
-ctx.lineTo(bgX + bgRadius, bgY + bgHeight);
-ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - bgRadius);
-ctx.lineTo(bgX, bgY + bgRadius);
-ctx.quadraticCurveTo(bgX, bgY, bgX + bgRadius, bgY);
-ctx.closePath();
-
-ctx.fillStyle = textBackgroundColor;
-ctx.fill();
-
-
-// テキスト描画（中央配置）
-// ===== 擬似太字：横方向強調 =====
-ctx.fillStyle = "#FFFFFF";
-
-// 擬似太字（X軸に複製）
+  // 擬似太字（X軸に複製）
 ctx.shadowColor = "rgba(0,0,0,1)";
 ctx.shadowBlur = 0;
 ctx.shadowOffsetX = 1;
@@ -281,7 +267,16 @@ ctx.shadowColor = "transparent";
 
 ctx.fillText(text, textX, textY);
 
-  });
+  }, [
+    uploadedImage,
+    borderColor,
+    borderSize,
+    text,
+    textSize,
+    textBackgroundColor,
+    textPositionY,
+    logoImage, // ロゴも依存に入れる
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
