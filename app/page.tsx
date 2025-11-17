@@ -96,7 +96,7 @@ useEffect(() => {
    // 画像があるとき（corner maskを先に作る）
 if (uploadedImage) {
     // === 角丸マスクを適用（画像領域）=== 
-    const radius = 20; // 好みで変更可能！
+    const radius = 15; // 好みで変更可能！
 
     ctx.beginPath();
     ctx.moveTo(borderSize + radius, borderSize);
