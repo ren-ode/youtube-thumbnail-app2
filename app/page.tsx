@@ -185,7 +185,7 @@ let textX = canvasWidth / 2;
 let textY = canvasHeight - textPositionY;
 
 // 文字間隔（負の値で詰める）
-const letterSpacing = -4;
+const letterSpacing = -2;
 
 // テキスト幅を測定
 let actualTextWidth = 0;
