@@ -13,14 +13,19 @@ export default function Page() {
   const [logoRed, setLogoRed] = useState<HTMLImageElement | null>(null);
 
   const [borderColor, setBorderColor] = useState("#172F59");
-  const [borderSize, setBorderSize] = useState(20);
+  const borderSize = 20;
   const [text, setText] = useState("ここにショートタイトルを入力");
-  const [textSize, setTextSize] = useState(48);
+  const [textSize, setTextSize] = useState(70);
   const [textBackgroundColor, setTextBackgroundColor] = useState("#172F59");
   const [textPositionY, setTextPositionY] = useState(80);
 
   const canvasWidth = 1280;
   const canvasHeight = 720;
+
+  // 枠色が変わったら、テキスト背景色も自動で同じ色に変更
+useEffect(() => {
+  setTextBackgroundColor(borderColor);
+}, [borderColor]);
 
   // ロゴ2種類を読み込み
 useEffect(() => {
@@ -167,10 +172,7 @@ if (logoToUse) {
 
 }
 
-    // テキスト背景
-    // ===== テキスト描画 =====
-
-    // テキストが空なら、背景＆文字は描画しない
+// テキストが空なら、背景＆文字は描画しない
 if (!text.trim()) {
   return;
 }
@@ -180,38 +182,28 @@ ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 
 let textX = canvasWidth / 2;
-let textY = canvasHeight - textPositionY; // ★ let に変更（上書きするため）
+let textY = canvasHeight - textPositionY;
 
 // 文字間隔（負の値で詰める）
-const letterSpacing = -4; // 調整ポイント：-2〜-6が良い感じ
+const letterSpacing = -4;
 
 // テキスト幅を測定
 let actualTextWidth = 0;
 for (let i = 0; i < text.length; i++) {
-  actualTextWidth += ctx.measureText(text[i]).width + letterSpacing;
+  const charWidth = ctx.measureText(text[i]).width;
+  actualTextWidth += charWidth;
 }
+// 文字間隔ぶんを足す（文字数 - 1 個ぶん）
+actualTextWidth += letterSpacing * (text.length - 1);
 
-// 描画開始位置
+// 中央揃えになるように開始Xを計算
 let currentX = textX - actualTextWidth / 2;
-
-// 1文字ずつ描画（太字っぽく+字詰め）
-for (let i = 0; i < text.length; i++) {
-  const char = text[i];
-  const charWidth = ctx.measureText(char).width;
-
-  // 疑似太字（横に重ねる）
-  ctx.fillText(char, currentX + charWidth / 2 + 0.6, textY);
-  ctx.fillText(char, currentX + charWidth / 2 - 0.4, textY);
-  ctx.fillText(char, currentX + charWidth / 2, textY);
-
-  currentX += charWidth + letterSpacing;
-}
 
 // letterSpacing を反映した実際の幅
 const textWidth = actualTextWidth;
 
 // ★ ここを調整すれば余白が増える
-const paddingX = 42;  // 横余白 → 20→30くらいに増やす
+const paddingX = 20;  // 横余白 → 20→30くらいに増やす
 const paddingY = 15;  // 縦余白 → 10→15
 
 const bgWidth = textWidth + paddingX * 2;
@@ -235,7 +227,7 @@ const trimmedText = text.trim();
 if (trimmedText) {
   // ======== テキスト背景描画 ========
   ctx.fillStyle = textBackgroundColor;
-  const bgRadius = 20;
+  const bgRadius = 16;
 
   ctx.beginPath();
   ctx.moveTo(bgX + bgRadius, bgY);
@@ -251,32 +243,27 @@ if (trimmedText) {
   ctx.lineTo(bgX, bgY + bgRadius);
   ctx.quadraticCurveTo(bgX, bgY, bgX + bgRadius, bgY);
   ctx.closePath();
-
   ctx.fill();
+
+// ===== ここからテキストの描画 =====
+ctx.fillStyle = "#FFFFFF"; // 文字色を白に戻す
+
+// 背景帯の中央に文字を置きたいので、Y座標は帯の中心にする
+const textCenterY = bgY + bgHeight / 2;
+
+// ここで currentX を計算（上の方で textWidth はもう計算済みのはず）
+let currentX = textX - textWidth / 2;
+
+// 1文字ずつ描画
+for (let i = 0; i < text.length; i++) {
+  const char = text[i];
+  const charWidth = ctx.measureText(char).width;
+
+  ctx.fillText(char, currentX + charWidth / 2, textY);
+
+  currentX += charWidth + letterSpacing;
 }
-
-// ==== テキスト描画（テキストがあるときのみ描画）====
-  ctx.fillStyle = "#FFFFFF";
-
-  // 擬似太字（X軸に複製）
-ctx.shadowColor = "rgba(0,0,0,1)";
-ctx.shadowBlur = 0;
-ctx.shadowOffsetX = 1;
-ctx.shadowOffsetY = 0;
-
-// 1px横ズラし描画（右）
-ctx.fillText(text, textX + 0.6, textY);
-
-// 左側少しだけズラして厚み
-ctx.fillText(text, textX - 0.4, textY);
-
-// 本体（中央）
-ctx.fillText(text, textX, textY);
-
-// シャドウ解除
-ctx.shadowColor = "transparent";
-
-ctx.fillText(text, textX, textY);
+}
 
   }, [
     uploadedImage,
@@ -330,22 +317,9 @@ ctx.fillText(text, textX, textY);
             </button>
           </div>
 
-          {/* 枠サイズ */}
-          <div>
-            <label className="font-semibold text-sm">枠のサイズ: {borderSize}px</label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={borderSize}
-              onChange={(e) => setBorderSize(parseInt(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
           {/* 枠の色 */}
           <div>
-            <label className="font-semibold text-sm">枠の色</label>
+            <label className="font-semibold text-sm">全体のカラー</label>
             <div className="flex gap-2 mt-2">
               {["#172F59", "#c90a0f"].map((color) => (
                 <button
@@ -376,27 +350,12 @@ ctx.fillText(text, textX, textY);
             <label className="font-semibold text-sm">テキストサイズ: {textSize}px</label>
             <input
               type="range"
-              min="20"
-              max="120"
+              min="70"
+              max="200"
               value={textSize}
               onChange={(e) => setTextSize(parseInt(e.target.value))}
               className="w-full"
             />
-          </div>
-
-          {/* テキスト背景色 */}
-          <div>
-            <label className="font-semibold text-sm">テキスト背景色</label>
-            <div className="flex gap-2 mt-2">
-              {["#172F59", "#c90a0f"].map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setTextBackgroundColor(color)}
-                  className="h-8 w-8 rounded-full border"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
           </div>
 
           {/* テキスト位置 */}
@@ -404,8 +363,8 @@ ctx.fillText(text, textX, textY);
             <label className="font-semibold text-sm">テキスト位置: {textPositionY}px</label>
             <input
               type="range"
-              min="20"
-              max="600"
+              min="80"
+              max="360"
               value={textPositionY}
               onChange={(e) => setTextPositionY(parseInt(e.target.value))}
               className="w-full"
