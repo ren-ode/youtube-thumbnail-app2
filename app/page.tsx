@@ -9,6 +9,8 @@ export default function Page() {
 
   const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  const [logoBlue, setLogoBlue] = useState<HTMLImageElement | null>(null);
+  const [logoRed, setLogoRed] = useState<HTMLImageElement | null>(null);
 
   const [borderColor, setBorderColor] = useState("#172F59");
   const [borderSize, setBorderSize] = useState(20);
@@ -20,14 +22,17 @@ export default function Page() {
   const canvasWidth = 1280;
   const canvasHeight = 720;
 
-  // ===== ロゴ画像を読み込む（1回だけ） =====
-  useEffect(() => {
-    const img = new Image();
-    img.src = "/youtube_ann_logo.png"; // public フォルダ配下
-    img.onload = () => {
-      setLogoImage(img);
-    };
-  }, []);
+  // ロゴ2種類を読み込み
+useEffect(() => {
+  const blue = new Image();
+  blue.src = "/youtube_ann_logo.png";
+
+  const red = new Image();
+  red.src = "/youtube_ann_logo_red.png";
+
+  blue.onload = () => setLogoBlue(blue);
+  red.onload = () => setLogoRed(red);
+}, []);
 
   // 画像アップロード
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,14 +150,20 @@ if (uploadedImage) {
 
   ctx.drawImage(uploadedImage, sx, sy, sW, sH, dx, dy, dW, dH);
 
-  // ==== テレ朝NEWS ロゴ描画 ====
-if (logoImage) {
-      const logoWidth = 180; // 好きなサイズ
-      const logoHeight = (logoImage.height / logoImage.width) * logoWidth;
-      const padding = 20; // 左上からの余白
+// ==== テレ朝NEWS ロゴ描画 ====
+let logoToUse = logoBlue; // デフォルトは紺
 
-      ctx.drawImage(logoImage, padding, padding, logoWidth, logoHeight);
-    }
+if (borderColor.toLowerCase() === "#c90a0f") {
+  logoToUse = logoRed; // 枠が赤なら赤ロゴ
+}
+
+if (logoToUse) {
+  const logoWidth = 180;
+  const logoHeight = (logoToUse.height / logoToUse.width) * logoWidth;
+  const padding = 20;
+
+  ctx.drawImage(logoToUse, padding, padding, logoWidth, logoHeight);
+}
 
 }
 
@@ -336,7 +347,7 @@ ctx.fillText(text, textX, textY);
           <div>
             <label className="font-semibold text-sm">枠の色</label>
             <div className="flex gap-2 mt-2">
-              {["#172F59", "#FF0000"].map((color) => (
+              {["#172F59", "#c90a0f"].map((color) => (
                 <button
                   key={color}
                   onClick={() => setBorderColor(color)}
@@ -377,7 +388,7 @@ ctx.fillText(text, textX, textY);
           <div>
             <label className="font-semibold text-sm">テキスト背景色</label>
             <div className="flex gap-2 mt-2">
-              {["#172F59", "#FF0000"].map((color) => (
+              {["#172F59", "#c90a0f"].map((color) => (
                 <button
                   key={color}
                   onClick={() => setTextBackgroundColor(color)}
