@@ -8,36 +8,48 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
-  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [logoBlue, setLogoBlue] = useState<HTMLImageElement | null>(null);
   const [logoRed, setLogoRed] = useState<HTMLImageElement | null>(null);
+  
+  // 新しいデザインベースの状態
+  const [baseFrameBlue, setBaseFrameBlue] = useState<HTMLImageElement | null>(null);
+  const [baseFrameRed, setBaseFrameRed] = useState<HTMLImageElement | null>(null);
 
   const [borderColor, setBorderColor] = useState("#172F59");
   const borderSize = 20;
   const [text, setText] = useState("ここにショートタイトルを入力");
   const [textSize, setTextSize] = useState(70);
-  const [textBackgroundColor, setTextBackgroundColor] = useState("#172F59");
-  const [textPositionY, setTextPositionY] = useState(80);
+  
+  // テキスト位置の初期値（下部帯の中央）
+  const [textPositionY, setTextPositionY] = useState(608);
+
+  // 画像の上下位置の初期値（0 = 中央ぴったり）
+  const [imagePositionY, setImagePositionY] = useState(0);
+
+  // ★【追加】文字間隔の状態（初期値はこれまでの -2）
+  const [letterSpacing, setLetterSpacing] = useState(-2);
 
   const canvasWidth = 1280;
   const canvasHeight = 720;
 
-  // 枠色が変わったら、テキスト背景色も自動で同じ色に変更
-useEffect(() => {
-  setTextBackgroundColor(borderColor);
-}, [borderColor]);
+  // 画像をすべて読み込み
+  useEffect(() => {
+    // テレ朝NEWSロゴ
+    const blueLogo = new Image();
+    blueLogo.src = "/youtube_ann_logo.png";
+    const redLogo = new Image();
+    redLogo.src = "/youtube_ann_logo_red.png";
+    blueLogo.onload = () => setLogoBlue(blueLogo);
+    redLogo.onload = () => setLogoRed(redLogo);
 
-  // ロゴ2種類を読み込み
-useEffect(() => {
-  const blue = new Image();
-  blue.src = "/youtube_ann_logo.png";
-
-  const red = new Image();
-  red.src = "/youtube_ann_logo_red.png";
-
-  blue.onload = () => setLogoBlue(blue);
-  red.onload = () => setLogoRed(red);
-}, []);
+    // 新しいデザインベース（★前提：透過PNGであること）
+    const blueFrame = new Image();
+    blueFrame.src = "/base_frame_blue.png";
+    const redFrame = new Image();
+    redFrame.src = "/base_frame_red.png";
+    blueFrame.onload = () => setBaseFrameBlue(blueFrame);
+    redFrame.onload = () => setBaseFrameRed(redFrame);
+  }, []);
 
   // 画像アップロード
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,33 +67,26 @@ useEffect(() => {
 
   // ダウンロード
   const handleDownload = () => {
-  const canvas = canvasRef.current as HTMLCanvasElement | null;
-if (!canvas) return; // null 対応
+    const canvas = canvasRef.current as HTMLCanvasElement | null;
+    if (!canvas) return;
 
-  const link = document.createElement("a");
-  link.download = "thumbnail.png";
-  link.href = canvas.toDataURL();
-  link.click();
-};
+    const link = document.createElement("a");
+    link.download = "thumbnail.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  };
 
-useEffect(() => {
-  const logo = new Image();
-  logo.src = "/youtube_ann_logo.png"; // ← ここに君のロゴ名
-  logo.onload = () => setLogoImage(logo);
-}, []);
-
-// フォントをロードする（1回だけ実行）
-useEffect(() => {
-  (async () => {
-    try {
-      // テレ朝UDフォントをロード
-      await document.fonts.load(`48px "テレ朝UD角ゴ Pr6N DB"`);
-      console.log("フォントロード完了：テレ朝UD角ゴ Pr6N DB");
-    } catch (e) {
-      console.warn("フォントロードに失敗しました", e);
-    }
-  })();
-}, []);
+  // フォントをロードする（1回だけ実行）
+  useEffect(() => {
+    (async () => {
+      try {
+        await document.fonts.load(`48px "テレ朝UD角ゴ Pr6N DB"`);
+        console.log("フォントロード完了：テレ朝UD角ゴ Pr6N DB");
+      } catch (e) {
+        console.warn("フォントロードに失敗しました", e);
+      }
+    })();
+  }, []);
 
   // Canvas描画
   useEffect(() => {
@@ -99,171 +104,111 @@ useEffect(() => {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // ===== 枠 =====
-    ctx.fillStyle = borderColor;
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // === プレースホルダーの正確な座標とサイズ ===
+    const placeholderX = 30;
+    const placeholderY = 30;
+    const placeholderW = 1220; // 1280 - 30 * 2
+    const placeholderH = 560;  // 590 - 30
 
-   // 画像があるとき（corner maskを先に作る）
-if (uploadedImage) {
-    // === 角丸マスクを適用（画像領域）=== 
-    const radius = 15; // 好みで変更可能！
+    // 画像があるとき（キャンバス全体をカバーするように拡大）
+    if (uploadedImage) {
+      const availW = canvasWidth;
+      const availH = canvasHeight;
+      const availRatio = availW / availH;
 
-    ctx.beginPath();
-    ctx.moveTo(borderSize + radius, borderSize);
-    ctx.lineTo(canvasWidth - borderSize - radius, borderSize);
-    ctx.quadraticCurveTo(canvasWidth - borderSize, borderSize, canvasWidth - borderSize, borderSize + radius);
-    ctx.lineTo(canvasWidth - borderSize, canvasHeight - borderSize - radius);
-    ctx.quadraticCurveTo(canvasWidth - borderSize, canvasHeight - borderSize, canvasWidth - borderSize - radius, canvasHeight - borderSize);
-    ctx.lineTo(borderSize + radius, canvasHeight - borderSize);
-    ctx.quadraticCurveTo(borderSize, canvasHeight - borderSize, borderSize, canvasHeight - borderSize - radius);
-    ctx.lineTo(borderSize, borderSize + radius);
-    ctx.quadraticCurveTo(borderSize, borderSize, borderSize + radius, borderSize);
-    ctx.closePath();
-    ctx.clip();
+      const imgW = uploadedImage.naturalWidth ?? uploadedImage.width;
+      const imgH = uploadedImage.naturalHeight ?? uploadedImage.height;
+      const imgRatio = imgW / imgH;
 
-  const availW = canvasWidth - borderSize * 2;   // 枠の内側の幅
-  const availH = canvasHeight - borderSize * 2;  // 枠の内側の高さ
-  const availRatio = availW / availH;
+      let sx = 0, sy = 0, sW = imgW, sH = imgH;
 
-  // 画像の実サイズ（naturalWidth/Height を使うのが確実）
-  const imgW = uploadedImage.naturalWidth ?? uploadedImage.width;
-  const imgH = uploadedImage.naturalHeight ?? uploadedImage.height;
-  const imgRatio = imgW / imgH;
+      if (imgRatio > availRatio) {
+        sH = imgH;
+        sW = Math.round(sH * availRatio);
+        sx = Math.round((imgW - sW) / 2);
+        sy = 0;
+      } else {
+        sW = imgW;
+        sH = Math.round(sW / availRatio);
+        sx = 0;
+        sy = Math.round((imgH - sH) / 2);
+      }
 
-  // ソース側を中央トリミングして「cover」
-  let sx = 0, sy = 0, sW = imgW, sH = imgH;
+      // 画像はキャンバス全体に描画（透過枠の下に回り込ませる）
+      ctx.drawImage(uploadedImage, sx, sy, sW, sH, 0, imagePositionY, canvasWidth, canvasHeight);
+    }
 
-  if (imgRatio > availRatio) {
-    // 画像が横に広い → 横をカット
-    sH = imgH;
-    sW = Math.round(sH * availRatio);
-    sx = Math.round((imgW - sW) / 2);
-    sy = 0;
-  } else {
-    // 画像が縦に長い → 上下をカット
-    sW = imgW;
-    sH = Math.round(sW / availRatio);
-    sx = 0;
-    sy = Math.round((imgH - sH) / 2);
-  }
+    // ===== 新しいベースフレーム画像の描画 =====
+    let baseToUse = baseFrameBlue;
+    if (borderColor.toLowerCase() === "#c90a0f") {
+      baseToUse = baseFrameRed;
+    }
 
-  // デスティネーションは内側をピッタリ埋める
-  const dx = borderSize;
-  const dy = borderSize;
-  const dW = availW;
-  const dH = availH;
+    if (baseToUse) {
+      ctx.drawImage(baseToUse, 0, 0, canvasWidth, canvasHeight);
+    }
 
-  ctx.drawImage(uploadedImage, sx, sy, sW, sH, dx, dy, dW, dH);
+    // ==== テレ朝NEWS ロゴ描画 ====
+    let logoToUse = logoBlue;
+    if (borderColor.toLowerCase() === "#c90a0f") {
+      logoToUse = logoRed;
+    }
 
-// ==== テレ朝NEWS ロゴ描画 ====
-let logoToUse = logoBlue; // デフォルトは紺
+    if (logoToUse) {
+      const logoWidth = 180;
+      const logoHeight = (logoToUse.height / logoToUse.width) * logoWidth;
+      const padding = -11;
 
-if (borderColor.toLowerCase() === "#c90a0f") {
-  logoToUse = logoRed; // 枠が赤なら赤ロゴ
-}
+      // ロゴはプレースホルダーの上に重ねる（プレースホルダーの基準座標を使用）
+      ctx.drawImage(logoToUse, placeholderX + padding, placeholderY + padding, logoWidth, logoHeight);
+    }
 
-if (logoToUse) {
-  const logoWidth = 180;
-  const logoHeight = (logoToUse.height / logoToUse.width) * logoWidth;
-  const padding = 20;
+    // テキストが空なら、文字は描画しない
+    if (!text.trim()) {
+      return;
+    }
 
-  ctx.drawImage(logoToUse, padding, padding, logoWidth, logoHeight);
-}
+    ctx.font = `${textSize}px "テレ朝UD角ゴ Pr6N DB", "Noto Sans JP", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-}
+    let textX = canvasWidth / 2;
+    let textY = textPositionY;
 
-// テキストが空なら、背景＆文字は描画しない
-if (!text.trim()) {
-  return;
-}
+    // ★ 固定値（const letterSpacing = -2;）だった部分を削除し、Stateの値をそのまま使うようにしました
 
-ctx.font = `${textSize}px "テレ朝UD角ゴ Pr6N DB", "Noto Sans JP", sans-serif`;
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
+    // テキスト幅を測定
+    let actualTextWidth = 0;
+    for (let i = 0; i < text.length; i++) {
+      const charWidth = ctx.measureText(text[i]).width;
+      actualTextWidth += charWidth;
+    }
+    actualTextWidth += letterSpacing * (text.length - 1);
 
-let textX = canvasWidth / 2;
-let textY = canvasHeight - textPositionY;
+    // ===== テキストと画面下端の接触防止 =====
+    const minGap = 15;
+    const bottomLimit = canvasHeight - minGap; 
 
-// 文字間隔（負の値で詰める）
-const letterSpacing = -2;
+    if (textY + textSize / 2 > bottomLimit) {
+      textY = bottomLimit - textSize / 2;
+    }
 
-// テキスト幅を測定
-let actualTextWidth = 0;
-for (let i = 0; i < text.length; i++) {
-  const charWidth = ctx.measureText(text[i]).width;
-  actualTextWidth += charWidth;
-}
-// 文字間隔ぶんを足す（文字数 - 1 個ぶん）
-actualTextWidth += letterSpacing * (text.length - 1);
+    const trimmedText = text.trim();
+    if (trimmedText) {
+      // ===== テキストの描画（背景座布団なし） =====
+      ctx.fillStyle = "#FFFFFF"; 
 
-// 中央揃えになるように開始Xを計算
-let currentX = textX - actualTextWidth / 2;
+      let currentX = textX - actualTextWidth / 2;
 
-// letterSpacing を反映した実際の幅
-const textWidth = actualTextWidth;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const charWidth = ctx.measureText(char).width;
 
-// ★ ここを調整すれば余白が増える
-const paddingX = 20;  // 横余白 → 20→30くらいに増やす
-const paddingY = 15;  // 縦余白 → 10→15
+        ctx.fillText(char, currentX + charWidth / 2, textY);
 
-const bgWidth = textWidth + paddingX * 2;
-const bgHeight = textSize + paddingY * 2;
-
-// ===== テキスト帯と枠の下端接触防止 =====
-const minGap = 10;
-const textBottom = textY + bgHeight / 2;
-const bottomLimit = canvasHeight - borderSize - minGap;
-
-if (textBottom > bottomLimit) {
-  textY = bottomLimit - bgHeight / 2;
-}
-
-// 背景位置（中央揃え）
-const bgX = textX - bgWidth / 2;
-const bgY = textY - bgHeight / 2;
-
-// ここで一回だけ trim しておく
-const trimmedText = text.trim();
-if (trimmedText) {
-  // ======== テキスト背景描画 ========
-  ctx.fillStyle = textBackgroundColor;
-  const bgRadius = 16;
-
-  ctx.beginPath();
-  ctx.moveTo(bgX + bgRadius, bgY);
-  ctx.lineTo(bgX + bgWidth - bgRadius, bgY);
-  ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + bgRadius);
-
-  ctx.lineTo(bgX + bgWidth, bgY + bgHeight - bgRadius);
-  ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - bgRadius, bgY + bgHeight);
-
-  ctx.lineTo(bgX + bgRadius, bgY + bgHeight);
-  ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - bgRadius);
-
-  ctx.lineTo(bgX, bgY + bgRadius);
-  ctx.quadraticCurveTo(bgX, bgY, bgX + bgRadius, bgY);
-  ctx.closePath();
-  ctx.fill();
-
-// ===== ここからテキストの描画 =====
-ctx.fillStyle = "#FFFFFF"; // 文字色を白に戻す
-
-// 背景帯の中央に文字を置きたいので、Y座標は帯の中心にする
-const textCenterY = bgY + bgHeight / 2;
-
-// ここで currentX を計算（上の方で textWidth はもう計算済みのはず）
-let currentX = textX - textWidth / 2;
-
-// 1文字ずつ描画
-for (let i = 0; i < text.length; i++) {
-  const char = text[i];
-  const charWidth = ctx.measureText(char).width;
-
-  ctx.fillText(char, currentX + charWidth / 2, textY);
-
-  currentX += charWidth + letterSpacing;
-}
-}
+        currentX += charWidth + letterSpacing;
+      }
+    }
 
   }, [
     uploadedImage,
@@ -271,28 +216,31 @@ for (let i = 0; i < text.length; i++) {
     borderSize,
     text,
     textSize,
-    textBackgroundColor,
     textPositionY,
-    logoImage, // ロゴも依存に入れる
+    imagePositionY,
+    letterSpacing, // ★【追加】文字間隔の変更をCanvasに伝えるために監視リストに追加
+    logoBlue, 
+    logoRed,  
+    baseFrameBlue, 
+    baseFrameRed,  
   ]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-2">YouTube サムネイル作成ツール</h1>
-      <p className="text-gray-600 mb-8">16:9の画像をアップロードしてください</p>
+      <p className="text-gray-600 mb-8">テレ朝UDが使用可能なPCでは、フォントが適用されます。</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-7xl">
         
         {/* プレビュー */}
         <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4">
           <canvas
-          ref={canvasRef}
-          width={1280}
-          height={720}
-          style={{ width: "100%", height: "auto", aspectRatio: "16 / 9", display: "block" }}
-          className="border rounded"
+            ref={canvasRef}
+            width={1280}
+            height={720}
+            style={{ width: "100%", height: "auto", aspectRatio: "16 / 9", display: "block" }}
+            className="border rounded"
           />
-
         </div>
 
         {/* コントロール */}
@@ -317,7 +265,22 @@ for (let i = 0; i < text.length; i++) {
             </button>
           </div>
 
-          {/* 枠の色 */}
+          {/* 画像位置の調整スライダー */}
+          {uploadedImage && (
+            <div>
+              <label className="font-semibold text-sm">画像上下位置: {imagePositionY}px</label>
+              <input
+                type="range"
+                min="-150"
+                max="150"
+                value={imagePositionY}
+                onChange={(e) => setImagePositionY(parseInt(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {/* 全体のカラー（下部帯とロゴ） */}
           <div>
             <label className="font-semibold text-sm">全体のカラー</label>
             <div className="flex gap-2 mt-2">
@@ -363,12 +326,25 @@ for (let i = 0; i < text.length; i++) {
             <label className="font-semibold text-sm">テキスト位置: {textPositionY}px</label>
             <input
               type="range"
-              min="80"
-              max="360"
+              min="590"
+              max="648"
               value={textPositionY}
               onChange={(e) => setTextPositionY(parseInt(e.target.value))}
               className="w-full"
             />
+          </div>
+
+          {/* ★【追加】文字間隔スライダー */}
+          <div>
+            <label className="font-semibold text-sm">文字間隔: {letterSpacing}px</label>
+            <input
+              type="range"
+              min="-20"
+              max="30"
+              value={letterSpacing}
+              onChange={(e) => setLetterSpacing(parseInt(e.target.value))}
+              className="w-full"
+                />
           </div>
 
           {/* ダウンロード */}
